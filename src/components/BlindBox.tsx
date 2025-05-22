@@ -10,14 +10,12 @@ import { generateImagePrompt } from "@/utils/nameAnalysis";
 interface BlindBoxProps {
   element1?: string;
   element2?: string;
-  style?: string;
   onReset?: () => void;
 }
 
 const BlindBox: React.FC<BlindBoxProps> = ({ 
   element1 = "", 
   element2 = "", 
-  style = "realistic", 
   onReset 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,13 +26,13 @@ const BlindBox: React.FC<BlindBoxProps> = ({
   const boxRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Generate a mock image URL based on the elements and style
-  // In a real implementation, this would call an AI image generation API
+  // Generate a mock image URL based on the elements
+  // Always use cartoon style
   const generateMockImage = (): Promise<string> => {
     return new Promise((resolve) => {
       // Simulate API call delay
       setTimeout(() => {
-        const imagePrompt = generateImagePrompt(element1, element2, style);
+        const imagePrompt = generateImagePrompt(element1, element2, "cartoon");
         console.log("Image generation prompt:", imagePrompt);
         
         // For demo purposes, use a placeholder image
@@ -63,6 +61,11 @@ const BlindBox: React.FC<BlindBoxProps> = ({
     if (isOpen || isLoading) return;
     
     setIsLoading(true);
+    toast({
+      title: "正在生成你的专属创意",
+      description: "请稍等片刻...",
+      duration: 3000,
+    });
     
     try {
       // Generate image
@@ -148,7 +151,7 @@ const BlindBox: React.FC<BlindBoxProps> = ({
             
             {isLoading && (
               <p className="text-center text-muted-foreground animate-pulse">
-                生成中...
+                创意生成中...
               </p>
             )}
           </div>
@@ -175,7 +178,6 @@ const BlindBox: React.FC<BlindBoxProps> = ({
               emoji: "✨🎨",
             }} 
             imageUrl={generatedImage || ""}
-            style={style}
             onReset={handleReset} 
           />
         </div>

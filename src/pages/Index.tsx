@@ -5,7 +5,7 @@ import { Sparkles, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { analyzeName, imageStyles } from "@/utils/nameAnalysis";
+import { analyzeName } from "@/utils/nameAnalysis";
 import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
@@ -16,7 +16,6 @@ const Index = () => {
   const [element2Options, setElement2Options] = useState<string[]>([]);
   const [selectedElement1, setSelectedElement1] = useState<string>("");
   const [selectedElement2, setSelectedElement2] = useState<string>("");
-  const [selectedStyle, setSelectedStyle] = useState<string>("realistic");
   const [showBlindBox, setShowBlindBox] = useState<boolean>(false);
   
   const handleAnalyze = () => {
@@ -146,30 +145,16 @@ const Index = () => {
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">图像风格</label>
-                  <Select value={selectedStyle} onValueChange={setSelectedStyle}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="选择风格" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {imageStyles.map((style) => (
-                        <SelectItem key={style.value} value={style.value}>{style.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
                 <Button 
                   onClick={handleGenerateImage}
                   className="w-full bg-blindbox-accent hover:bg-blindbox-accent/80 text-white"
                 >
                   <Sparkles className="mr-2 h-4 w-4" /> 
-                  生成盲盒
+                  生成可爱盲盒
                 </Button>
                 
                 <p className="text-xs text-center text-gray-500">
-                  盲盒将根据你选择的意象和风格生成创意组合
+                  盲盒将根据你选择的意象生成可爱风格的创意组合
                 </p>
               </>
             )}
@@ -180,7 +165,6 @@ const Index = () => {
           <BlindBox 
             element1={selectedElement1} 
             element2={selectedElement2} 
-            style={selectedStyle} 
             onReset={resetGenerator} 
           />
         </div>
@@ -192,7 +176,7 @@ const Index = () => {
           <ul className="text-gray-600 space-y-2 text-sm">
             <li>1. 输入你的姓名或昵称</li>
             <li>2. 从姓名分析中选择两个意象组合</li>
-            <li>3. 选择你喜欢的图片风格</li>
+            <li>3. 点击生成可爱盲盒</li>
             <li>4. 摇一摇盲盒，查看你的专属创意组合！</li>
           </ul>
         </div>

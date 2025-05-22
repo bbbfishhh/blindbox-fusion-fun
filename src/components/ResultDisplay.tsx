@@ -4,18 +4,14 @@ import { Combination } from "@/data/elements";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { RotateCcw, Sparkles, Download } from "lucide-react";
-import { imageStyles } from "@/utils/nameAnalysis";
 
 interface ResultDisplayProps {
   combination: Combination;
   imageUrl?: string;
-  style?: string;
   onReset: () => void;
 }
 
-const ResultDisplay: React.FC<ResultDisplayProps> = ({ combination, imageUrl, style = "realistic", onReset }) => {
-  const styleLabel = imageStyles.find(s => s.value === style)?.label || "写实风格";
-  
+const ResultDisplay: React.FC<ResultDisplayProps> = ({ combination, imageUrl, onReset }) => {
   return (
     <Card className="w-[320px] md:w-[400px] bg-gradient-to-br from-blindbox-light to-white border-2 border-blindbox-primary/20 shadow-xl">
       <CardHeader className="relative overflow-hidden pb-2">
@@ -56,7 +52,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ combination, imageUrl, st
         <div className="flex justify-center">
           <span className="inline-flex items-center rounded-full bg-blindbox-accent/10 px-3 py-1 text-sm font-medium text-blindbox-accent">
             <Sparkles className="mr-1 h-3 w-3" /> 
-            {styleLabel}
+            可爱风格
           </span>
         </div>
       </CardContent>
