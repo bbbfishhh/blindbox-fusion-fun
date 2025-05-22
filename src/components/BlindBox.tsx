@@ -160,8 +160,18 @@ const BlindBox: React.FC<BlindBoxProps> = ({
               id: `${element1}-${element2}`,
               name: combinationName,
               description: combinationDesc,
-              element1: { id: "1", name: element1, emoji: "✨" },
-              element2: { id: "2", name: element2, emoji: "🎨" },
+              element1: { 
+                id: "1", 
+                name: element1, 
+                description: `${element1}元素`, 
+                emoji: "✨" 
+              },
+              element2: { 
+                id: "2", 
+                name: element2, 
+                description: `${element2}元素`, 
+                emoji: "🎨" 
+              },
               emoji: "✨🎨",
             }} 
             imageUrl={generatedImage || ""}
