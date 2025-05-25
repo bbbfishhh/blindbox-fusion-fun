@@ -5,20 +5,18 @@ import { Sparkles, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { analyzeName } from "@/utils/nameAnalysis";
 import { useToast } from "@/components/ui/use-toast";
+import { generateSymbols, type SymbolOption } from "@/services/api";
 
 const Index = () => {
   const { toast } = useToast();
   const [name, setName] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
-  const [element1Options, setElement1Options] = useState<string[]>([]);
-  const [element2Options, setElement2Options] = useState<string[]>([]);
-  const [selectedElement1, setSelectedElement1] = useState<string>("");
-  const [selectedElement2, setSelectedElement2] = useState<string>("");
+  const [symbolOptions, setSymbolOptions] = useState<SymbolOption[]>([]);
+  const [selectedSymbolId, setSelectedSymbolId] = useState<string>("");
   const [showBlindBox, setShowBlindBox] = useState<boolean>(false);
   
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!name.trim()) {
       toast({
         title: "请输入您的姓名或昵称",
@@ -30,35 +28,35 @@ const Index = () => {
     
     setIsAnalyzing(true);
     
-    // Simulate analysis delay
-    setTimeout(() => {
-      const { element1Options, element2Options } = analyzeName(name);
+    try {
+      const response = await generateSymbols(name);
+      setSymbolOptions(response.symbol_dict);
       
-      setElement1Options(element1Options);
-      setElement2Options(element2Options);
-      
-      // Auto-select first options
-      if (element1Options.length > 0) {
-        setSelectedElement1(element1Options[0]);
+      // Auto-select first option
+      if (response.symbol_dict.length > 0) {
+        setSelectedSymbolId(response.symbol_dict[0].id.toString());
       }
-      if (element2Options.length > 0) {
-        setSelectedElement2(element2Options[0]);
-      }
-      
-      setIsAnalyzing(false);
       
       toast({
         title: "分析完成",
-        description: `从"${name}"中找到了${element1Options.length + element2Options.length}个可能的意象组合`,
+        description: `从"${name}"中找到了${response.symbol_dict.length}个可能的意象组合`,
       });
-    }, 800);
+    } catch (error) {
+      toast({
+        title: "分析失败",
+        description: "请检查网络连接或稍后再试",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
   
   const handleGenerateImage = () => {
-    if (!selectedElement1 || !selectedElement2) {
+    if (!selectedSymbolId) {
       toast({
-        title: "请选择两个意象",
-        description: "需要两个意象才能生成组合",
+        title: "请选择一个意象组合",
+        description: "需要选择意象组合才能生成盲盒",
         variant: "destructive"
       });
       return;
@@ -74,7 +72,11 @@ const Index = () => {
   
   const resetGenerator = () => {
     setShowBlindBox(false);
+    setSymbolOptions([]);
+    setSelectedSymbolId("");
   };
+
+  const selectedSymbol = symbolOptions.find(option => option.id.toString() === selectedSymbolId);
   
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-start py-10 px-4">
@@ -108,46 +110,33 @@ const Index = () => {
                   className="bg-blindbox-primary text-white hover:bg-blindbox-primary/80"
                 >
                   <Search className="h-4 w-4 mr-1" />
-                  分析
+                  {isAnalyzing ? "分析中..." : "分析"}
                 </Button>
               </div>
             </div>
             
-            {element1Options.length > 0 && (
+            {symbolOptions.length > 0 && (
               <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">第一个意象</label>
-                    <Select value={selectedElement1} onValueChange={setSelectedElement1}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="选择第一个意象" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {element1Options.map((option, index) => (
-                          <SelectItem key={`el1-${index}`} value={option}>{option}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">第二个意象</label>
-                    <Select value={selectedElement2} onValueChange={setSelectedElement2}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="选择第二个意象" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {element2Options.map((option, index) => (
-                          <SelectItem key={`el2-${index}`} value={option}>{option}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">选择意象组合</label>
+                  <Select value={selectedSymbolId} onValueChange={setSelectedSymbolId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="选择一个意象组合" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {symbolOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id.toString()}>
+                          {option.symbol1} + {option.symbol2}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <Button 
                   onClick={handleGenerateImage}
                   className="w-full bg-blindbox-accent hover:bg-blindbox-accent/80 text-white"
+                  disabled={!selectedSymbolId}
                 >
                   <Sparkles className="mr-2 h-4 w-4" /> 
                   生成可爱盲盒
@@ -163,8 +152,8 @@ const Index = () => {
       ) : (
         <div id="blindbox-section" className="w-full flex flex-col items-center justify-center">
           <BlindBox 
-            element1={selectedElement1} 
-            element2={selectedElement2} 
+            symbol1={selectedSymbol?.symbol1 || ""} 
+            symbol2={selectedSymbol?.symbol2 || ""} 
             onReset={resetGenerator} 
           />
         </div>
@@ -175,7 +164,7 @@ const Index = () => {
           <h2 className="font-medium text-xl mb-2 text-blindbox-primary">如何玩？</h2>
           <ul className="text-gray-600 space-y-2 text-sm">
             <li>1. 输入你的姓名或昵称</li>
-            <li>2. 从姓名分析中选择两个意象组合</li>
+            <li>2. 从分析结果中选择一个意象组合</li>
             <li>3. 点击生成可爱盲盒</li>
             <li>4. 摇一摇盲盒，查看你的专属创意组合！</li>
           </ul>

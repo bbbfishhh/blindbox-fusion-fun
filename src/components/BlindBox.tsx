@@ -1,21 +1,21 @@
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { Box, Gift, PackageOpen, Sparkles, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createParticles } from "@/utils/combinationUtils";
 import ResultDisplay from "./ResultDisplay";
 import { useToast } from "@/components/ui/use-toast";
-import { generateImagePrompt } from "@/utils/nameAnalysis";
+import { generateImage, type SymbolSelection } from "@/services/api";
 
 interface BlindBoxProps {
-  element1?: string;
-  element2?: string;
+  symbol1?: string;
+  symbol2?: string;
   onReset?: () => void;
 }
 
 const BlindBox: React.FC<BlindBoxProps> = ({ 
-  element1 = "", 
-  element2 = "", 
+  symbol1 = "", 
+  symbol2 = "", 
   onReset 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,22 +25,6 @@ const BlindBox: React.FC<BlindBoxProps> = ({
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  // Generate a mock image URL based on the elements
-  // Always use cartoon style
-  const generateMockImage = (): Promise<string> => {
-    return new Promise((resolve) => {
-      // Simulate API call delay
-      setTimeout(() => {
-        const imagePrompt = generateImagePrompt(element1, element2, "cartoon");
-        console.log("Image generation prompt:", imagePrompt);
-        
-        // For demo purposes, use a placeholder image
-        // In a real implementation, this would be the URL returned by the AI image generation API
-        resolve("https://source.unsplash.com/random/400x400/?creative," + element1 + "," + element2);
-      }, 2000);
-    });
-  };
 
   const handleShake = () => {
     if (isShaking || isOpen) return;
@@ -63,31 +47,48 @@ const BlindBox: React.FC<BlindBoxProps> = ({
     setIsLoading(true);
     toast({
       title: "正在生成你的专属创意",
-      description: "请稍等片刻...",
-      duration: 3000,
+      description: "请稍等片刻，图片生成需要一些时间...",
+      duration: 5000,
     });
     
     try {
-      // Generate image
-      const imageUrl = await generateMockImage();
-      setGeneratedImage(imageUrl);
+      // Call the image generation API
+      const symbolSelection: SymbolSelection = {
+        symbol1,
+        symbol2
+      };
       
-      // Open the box
-      setIsOpen(true);
+      const response = await generateImage(symbolSelection);
       
-      // Create particles for opening animation
-      if (boxRef.current) {
-        createParticles(boxRef.current, 30);
+      if (response.status === "success" && response.image_url) {
+        setGeneratedImage(response.image_url);
+        
+        // Open the box
+        setIsOpen(true);
+        
+        // Create particles for opening animation
+        if (boxRef.current) {
+          createParticles(boxRef.current, 30);
+        }
+        
+        // Show result after box opening animation
+        setTimeout(() => {
+          setShowResult(true);
+        }, 500);
+        
+        toast({
+          title: "创意生成成功！",
+          description: "你的专属可爱组合已经准备好了",
+          duration: 3000,
+        });
+      } else {
+        throw new Error("Image generation failed");
       }
-      
-      // Show result after box opening animation
-      setTimeout(() => {
-        setShowResult(true);
-      }, 500);
     } catch (error) {
+      console.error("Image generation error:", error);
       toast({
         title: "生成图像失败",
-        description: "请稍后再试",
+        description: "请检查网络连接或稍后再试",
         variant: "destructive",
       });
     } finally {
@@ -102,8 +103,8 @@ const BlindBox: React.FC<BlindBoxProps> = ({
     if (onReset) onReset();
   };
 
-  const combinationName = element1 && element2 ? `${element1}${element2}` : "奇思妙想";
-  const combinationDesc = element1 && element2 ? `${element1}与${element2}的奇妙组合` : "两个元素的神奇融合";
+  const combinationName = symbol1 && symbol2 ? `${symbol1}${symbol2}` : "奇思妙想";
+  const combinationDesc = symbol1 && symbol2 ? `${symbol1}与${symbol2}的奇妙组合` : "两个元素的神奇融合";
 
   return (
     <div className="relative flex flex-col items-center justify-center w-full">
@@ -150,9 +151,14 @@ const BlindBox: React.FC<BlindBoxProps> = ({
             )}
             
             {isLoading && (
-              <p className="text-center text-muted-foreground animate-pulse">
-                创意生成中...
-              </p>
+              <div className="text-center">
+                <p className="text-muted-foreground animate-pulse mb-1">
+                  创意生成中...
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  图片生成需要一些时间，请耐心等待
+                </p>
+              </div>
             )}
           </div>
         </div>
@@ -160,19 +166,19 @@ const BlindBox: React.FC<BlindBoxProps> = ({
         <div className="opacity-0 animate-result-appear">
           <ResultDisplay 
             combination={{
-              id: `${element1}-${element2}`,
+              id: `${symbol1}-${symbol2}`,
               name: combinationName,
               description: combinationDesc,
               element1: { 
                 id: "1", 
-                name: element1, 
-                description: `${element1}元素`, 
+                name: symbol1, 
+                description: `${symbol1}元素`, 
                 emoji: "✨" 
               },
               element2: { 
                 id: "2", 
-                name: element2, 
-                description: `${element2}元素`, 
+                name: symbol2, 
+                description: `${symbol2}元素`, 
                 emoji: "🎨" 
               },
               emoji: "✨🎨",
