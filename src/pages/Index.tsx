@@ -1,12 +1,12 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import BlindBox from "@/components/BlindBox";
-import { Sparkles, Search } from "lucide-react";
+import { Sparkles, Search, AlertCircle, Wifi, WifiOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
-import { generateSymbols, type SymbolOption } from "@/services/api";
+import { generateSymbols, checkApiConnection, type SymbolOption } from "@/services/api";
 
 const Index = () => {
   const { toast } = useToast();
@@ -15,6 +15,20 @@ const Index = () => {
   const [symbolOptions, setSymbolOptions] = useState<SymbolOption[]>([]);
   const [selectedSymbolId, setSelectedSymbolId] = useState<string>("");
   const [showBlindBox, setShowBlindBox] = useState<boolean>(false);
+  const [apiConnected, setApiConnected] = useState<boolean | null>(null);
+  
+  // 检查API连接状态
+  useEffect(() => {
+    const checkConnection = async () => {
+      const connected = await checkApiConnection();
+      setApiConnected(connected);
+      if (!connected) {
+        console.log('API connection failed - backend may not be running');
+      }
+    };
+    
+    checkConnection();
+  }, []);
   
   const handleAnalyze = async () => {
     if (!name.trim()) {
@@ -41,12 +55,23 @@ const Index = () => {
         title: "分析完成",
         description: `从"${name}"中找到了${response.symbol_dict.length}个可能的意象组合`,
       });
+      
+      // 连接成功后更新状态
+      setApiConnected(true);
     } catch (error) {
+      console.error('Symbol generation error:', error);
+      const errorMessage = error instanceof Error ? error.message : "分析失败，请稍后重试";
+      
       toast({
         title: "分析失败",
-        description: "请检查网络连接或稍后再试",
+        description: errorMessage,
         variant: "destructive"
       });
+      
+      // 如果是网络连接问题，更新连接状态
+      if (errorMessage.includes('无法连接')) {
+        setApiConnected(false);
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -90,6 +115,26 @@ const Index = () => {
           输入你的姓名或昵称，探索奇妙组合！
         </p>
       </div>
+      
+      {/* API连接状态提示 */}
+      {apiConnected === false && (
+        <Alert className="mb-6 max-w-md border-orange-200 bg-orange-50">
+          <WifiOff className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            <strong>后端服务未连接</strong><br />
+            请确保后端服务已启动并运行在 localhost:8000
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {apiConnected === true && (
+        <Alert className="mb-6 max-w-md border-green-200 bg-green-50">
+          <Wifi className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            后端服务连接正常
+          </AlertDescription>
+        </Alert>
+      )}
       
       {!showBlindBox ? (
         <div className="w-full max-w-md space-y-6 bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-md border border-blindbox-light">
