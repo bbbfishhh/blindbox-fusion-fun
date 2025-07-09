@@ -153,63 +153,56 @@ const BlindBoxReport = () => {
             </p>
           </CardHeader>
           
-          <CardContent>
-            <Tabs defaultValue="predefined" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="predefined">固定意象库</TabsTrigger>
-                <TabsTrigger value="name-based">姓名解析意象</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="predefined" className="space-y-6">
-                {Object.entries(predefinedSymbols).map(([category, symbols]) => (
-                  <div key={category}>
-                    <h3 className="text-lg font-semibold text-blindbox-primary mb-3">
-                      {category}
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {symbols.map((symbol) => (
-                        <Button
-                          key={symbol}
-                          variant={selectedSymbols.includes(symbol) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleSymbolToggle(symbol)}
-                          className={selectedSymbols.includes(symbol) 
-                            ? "bg-blindbox-accent hover:bg-blindbox-accent/80" 
-                            : "border-blindbox-light hover:border-blindbox-accent"
-                          }
-                        >
-                          {symbol}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </TabsContent>
-              
-              <TabsContent value="name-based">
-                <div>
-                  <h3 className="text-lg font-semibold text-blindbox-primary mb-3">
-                    来自 "{inputName}" 的原始意象
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {nameSymbols.map((symbol: string, index: number) => (
-                      <Button
-                        key={`${symbol}-${index}`}
-                        variant={selectedSymbols.includes(symbol) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleSymbolToggle(symbol)}
-                        className={selectedSymbols.includes(symbol) 
-                          ? "bg-blindbox-accent hover:bg-blindbox-accent/80" 
-                          : "border-blindbox-light hover:border-blindbox-accent"
-                        }
-                      >
-                        {symbol}
-                      </Button>
-                    ))}
-                  </div>
+          <CardContent className="space-y-6">
+            {/* 合并所有意象选择 */}
+            {Object.entries(predefinedSymbols).map(([category, symbols]) => (
+              <div key={category}>
+                <h3 className="text-lg font-semibold text-blindbox-primary mb-3">
+                  {category}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {symbols.map((symbol) => (
+                    <Button
+                      key={symbol}
+                      variant={selectedSymbols.includes(symbol) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleSymbolToggle(symbol)}
+                      className={selectedSymbols.includes(symbol) 
+                        ? "bg-blindbox-accent hover:bg-blindbox-accent/80" 
+                        : "border-blindbox-light hover:border-blindbox-accent"
+                      }
+                    >
+                      {symbol}
+                    </Button>
+                  ))}
                 </div>
-              </TabsContent>
-            </Tabs>
+              </div>
+            ))}
+            
+            {/* 姓名解析意象 */}
+            {nameSymbols.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-blindbox-primary mb-3">
+                  来自 "{inputName}" 的原始意象
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {nameSymbols.map((symbol: string, index: number) => (
+                    <Button
+                      key={`${symbol}-${index}`}
+                      variant={selectedSymbols.includes(symbol) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleSymbolToggle(symbol)}
+                      className={selectedSymbols.includes(symbol) 
+                        ? "bg-blindbox-accent hover:bg-blindbox-accent/80" 
+                        : "border-blindbox-light hover:border-blindbox-accent"
+                      }
+                    >
+                      {symbol}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* 选择状态显示 */}
             <div className="mt-8 p-4 bg-blindbox-light/20 rounded-lg">

@@ -109,53 +109,101 @@ const BlindBox: React.FC<BlindBoxProps> = ({
   return (
     <div className="relative flex flex-col items-center justify-center w-full">
       {!showResult ? (
-        <div 
-          ref={boxRef} 
-          className={`blind-box relative w-64 h-64 md:w-80 md:h-80 rounded-2xl bg-blindbox-primary/10 backdrop-blur-sm border-2 border-blindbox-primary flex items-center justify-center cursor-pointer transition-all duration-300 shadow-lg ${
-            isShaking ? "animate-box-shake" : ""
-          } ${isOpen ? "animate-box-open" : ""}`}
-          onClick={!isOpen ? handleShake : undefined}
-        >
-          <div className="absolute inset-0 flex items-center justify-center">
-            {isOpen ? (
-              <PackageOpen 
-                size={80} 
-                className="text-blindbox-accent animate-float" 
-                strokeWidth={1.5} 
-              />
-            ) : isLoading ? (
-              <RefreshCcw 
-                size={80} 
-                className="text-blindbox-primary animate-spin" 
-                strokeWidth={1.5} 
-              />
-            ) : (
-              <Gift 
-                size={80} 
-                className="text-blindbox-primary animate-float" 
-                strokeWidth={1.5} 
-              />
+        <div className="relative">
+          {/* 外层光环效果 */}
+          <div className="absolute -inset-4 rounded-3xl bg-gradient-to-r from-purple-400 via-pink-300 to-blue-400 opacity-20 blur-lg animate-pulse"></div>
+          
+          {/* 主盲盒容器 */}
+          <div 
+            ref={boxRef} 
+            className={`blind-box relative w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 shadow-2xl ${
+              isShaking ? "animate-bounce" : ""
+            } ${isOpen ? "scale-110" : "hover:scale-105"}`}
+            onClick={!isOpen ? handleShake : undefined}
+          >
+            {/* 动态渐变背景 */}
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-400 to-blue-500 animate-gradient-xy opacity-90"></div>
+            
+            {/* 动态光效层 */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent animate-shimmer"></div>
+            
+            {/* 微动粒子效果 */}
+            {!isOpen && (
+              <div className="absolute inset-0">
+                <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/60 rounded-full animate-ping"></div>
+                <div className="absolute top-3/4 right-1/4 w-1 h-1 bg-white/80 rounded-full animate-ping delay-300"></div>
+                <div className="absolute bottom-1/4 left-3/4 w-1.5 h-1.5 bg-white/70 rounded-full animate-ping delay-700"></div>
+              </div>
             )}
+            
+            {/* 礼物盒图标 */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              {isOpen ? (
+                <div className="relative">
+                  <PackageOpen 
+                    size={80} 
+                    className="text-white drop-shadow-lg animate-bounce" 
+                    strokeWidth={1.5} 
+                  />
+                  {/* 爆发光芒 */}
+                  <div className="absolute -inset-8 bg-gradient-radial from-white/40 to-transparent rounded-full animate-ping"></div>
+                </div>
+              ) : isLoading ? (
+                <div className="relative">
+                  <RefreshCcw 
+                    size={80} 
+                    className="text-white drop-shadow-lg animate-spin" 
+                    strokeWidth={1.5} 
+                  />
+                  <div className="absolute -inset-4 border-2 border-white/30 rounded-full animate-pulse"></div>
+                </div>
+              ) : (
+                <div className="relative group">
+                  <Gift 
+                    size={80} 
+                    className="text-white drop-shadow-lg transition-transform group-hover:scale-110 animate-pulse" 
+                    strokeWidth={1.5} 
+                  />
+                  {/* 微动光晕 */}
+                  <div className="absolute -inset-2 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity animate-pulse"></div>
+                </div>
+              )}
+            </div>
+            
+            {/* 装饰边框 */}
+            <div className="absolute inset-0 rounded-2xl border-2 border-white/30"></div>
           </div>
           
+          {/* 底部按钮和文字 */}
           <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 translate-y-full mt-6 w-full flex flex-col items-center gap-3">
             {!isOpen && !isLoading && (
-              <Button 
-                onClick={handleOpen}
-                className="bg-blindbox-accent hover:bg-blindbox-accent/80 text-white font-bold py-2 px-10 rounded-full shadow-lg"
-                size="lg"
-                disabled={isLoading}
-              >
-                <Sparkles className="mr-2 h-4 w-4" /> 打开盲盒
-              </Button>
+              <>
+                <div className="text-center mb-2">
+                  <p className="text-lg font-semibold text-purple-600 animate-pulse">摸一摸</p>
+                  <p className="text-sm text-gray-500">里面有什么？</p>
+                </div>
+                <Button 
+                  onClick={handleOpen}
+                  className="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                  size="lg"
+                  disabled={isLoading}
+                >
+                  <Sparkles className="mr-2 h-4 w-4 animate-spin" /> 打开盲盒
+                </Button>
+              </>
             )}
             
             {isLoading && (
               <div className="text-center">
-                <p className="text-muted-foreground animate-pulse mb-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce delay-100"></div>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200"></div>
+                </div>
+                <p className="text-purple-600 font-semibold animate-pulse mb-1">
                   创意生成中...
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-500">
                   图片生成需要一些时间，请耐心等待
                 </p>
               </div>
