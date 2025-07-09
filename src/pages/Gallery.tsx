@@ -49,7 +49,7 @@ const Gallery = () => {
   const navigate = useNavigate();
 
   const handleStartGeneration = () => {
-    navigate("/generator");
+    navigate("/name-input");
   };
 
   return (
