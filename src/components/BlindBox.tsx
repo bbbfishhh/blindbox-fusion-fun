@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { createParticles } from "@/utils/combinationUtils";
 import ResultDisplay from "./ResultDisplay";
 import { useToast } from "@/components/ui/use-toast";
-import { generateImage, type SymbolSelection } from "@/services/api";
+// BlindBox组件现在主要用于显示，实际API调用在页面级别处理
 
 interface BlindBoxProps {
   symbol1?: string;
@@ -52,16 +52,11 @@ const BlindBox: React.FC<BlindBoxProps> = ({
     });
     
     try {
-      // Call the image generation API
-      const symbolSelection: SymbolSelection = {
-        symbol1,
-        symbol2
-      };
+      // 模拟图片生成（实际调用在页面级别处理）
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const mockImageUrl = "https://via.placeholder.com/400x300?text=Generated+Image";
       
-      const response = await generateImage(symbolSelection);
-      
-      if (response.status === "success" && response.image_url) {
-        setGeneratedImage(response.image_url);
+      setGeneratedImage(mockImageUrl);
         
         // Open the box
         setIsOpen(true);
@@ -81,9 +76,6 @@ const BlindBox: React.FC<BlindBoxProps> = ({
           description: "你的专属可爱组合已经准备好了",
           duration: 3000,
         });
-      } else {
-        throw new Error("Image generation failed");
-      }
     } catch (error) {
       console.error("Image generation error:", error);
       toast({

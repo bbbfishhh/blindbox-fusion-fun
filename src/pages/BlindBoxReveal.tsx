@@ -4,55 +4,35 @@ import { Gift, PackageOpen, Sparkles, Eye, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { BlindBoxData } from "@/services/api";
 
-interface SymbolCombination {
-  id: number;
-  symbol1: string;
-  symbol2: string;
-  imageUrl?: string;
+interface SymbolCombination extends BlindBoxData {
   explanation?: string;
 }
 
 const BlindBoxReveal = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { inputName } = location.state || {};
+  const { inputName, blindBoxData } = location.state || {};
   
   const [blindBoxes, setBlindBoxes] = useState<SymbolCombination[]>([]);
   const [openedBoxes, setOpenedBoxes] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!inputName) {
+    if (!inputName || !blindBoxData) {
       navigate("/name-input");
       return;
     }
     
-    // TODO: 从API获取实际的意象组合
-    // 暂时使用模拟数据
-    const mockData: SymbolCombination[] = [
-      {
-        id: 1,
-        symbol1: "星辰",
-        symbol2: "海洋",
-        explanation: `从"${inputName}"中解析：星辰代表闪耀，海洋代表包容`
-      },
-      {
-        id: 2,
-        symbol1: "梦境",
-        symbol2: "花朵",
-        explanation: `从"${inputName}"中解析：梦境代表想象，花朵代表美好`
-      },
-      {
-        id: 3,
-        symbol1: "山峰",
-        symbol2: "彩虹",
-        explanation: `从"${inputName}"中解析：山峰代表坚毅，彩虹代表希望`
-      }
-    ];
+    // 将后端数据转换为前端格式
+    const formattedBlindBoxes: SymbolCombination[] = blindBoxData.map((box: BlindBoxData) => ({
+      ...box,
+      explanation: `${box.imagery1}与${box.imagery2}的神秘组合，蕴含着独特的寓意等待您的发现。`
+    }));
     
-    setBlindBoxes(mockData);
-  }, [inputName, navigate]);
+    setBlindBoxes(formattedBlindBoxes);
+  }, [inputName, blindBoxData, navigate]);
 
   const handleOpenBox = async (boxId: number) => {
     if (openedBoxes.has(boxId) || isLoading) return;
@@ -60,23 +40,12 @@ const BlindBoxReveal = () => {
     setIsLoading(boxId);
     
     try {
-      // TODO: 调用图片生成API
-      // const box = blindBoxes.find(b => b.id === boxId);
-      // const imageUrl = await generateImage(box.symbol1, box.symbol2);
-      
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 盲盒数据已经包含图片URL，直接标记为已打开
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 模拟打开动画
       
       setOpenedBoxes(prev => new Set([...prev, boxId]));
-      
-      // 更新对应盲盒的图片URL
-      setBlindBoxes(prev => prev.map(box => 
-        box.id === boxId 
-          ? { ...box, imageUrl: "https://images.unsplash.com/photo-1470813740244-df37b8c1edcb" }
-          : box
-      ));
     } catch (error) {
-      console.error("Failed to generate image:", error);
+      console.error("Failed to open box:", error);
     } finally {
       setIsLoading(null);
     }
@@ -88,7 +57,7 @@ const BlindBoxReveal = () => {
     navigate("/blind-box-report", {
       state: {
         inputName,
-        blindBoxes: blindBoxes.filter(box => openedBoxes.has(box.id))
+        openedBoxes: blindBoxes.filter(box => openedBoxes.has(box.id))
       }
     });
   };
@@ -139,19 +108,19 @@ const BlindBoxReveal = () => {
                       <div className="space-y-4">
                         <div className="w-full h-32 rounded-lg overflow-hidden">
                           <img 
-                            src={box.imageUrl} 
-                            alt={`${box.symbol1} + ${box.symbol2}`}
+                            src={box.image_url} 
+                            alt={`${box.imagery1} + ${box.imagery2}`}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="text-center space-y-2">
                           <div className="flex items-center justify-center gap-2">
                             <span className="text-lg font-semibold text-blindbox-primary">
-                              {box.symbol1}
+                              {box.imagery1}
                             </span>
                             <span className="text-blindbox-accent">+</span>
                             <span className="text-lg font-semibold text-blindbox-primary">
-                              {box.symbol2}
+                              {box.imagery2}
                             </span>
                           </div>
                           <p className="text-sm text-gray-600">

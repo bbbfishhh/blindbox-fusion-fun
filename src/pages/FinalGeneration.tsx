@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { generateImageFromImageries } from "@/services/api";
 
 interface GeneratedBox {
   id: string;
@@ -43,11 +44,8 @@ const FinalGeneration = () => {
     setCurrentBox(null);
     
     try {
-      // TODO: 调用后端API生成新的盲盒
-      // const result = await generateImage(selectedSymbols[0], selectedSymbols[1]);
-      
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 调用后端API生成新的盲盒图片
+      const result = await generateImageFromImageries(selectedSymbols[0], selectedSymbols[1]);
       
       const newBox: GeneratedBox = {
         id: `${Date.now()}`,
@@ -55,7 +53,8 @@ const FinalGeneration = () => {
         symbol2: selectedSymbols[1],
         rarity: getRandomRarity(),
         analysis: generateAnalysis(selectedSymbols[0], selectedSymbols[1]),
-        isOpened: false
+        isOpened: false,
+        imageUrl: result.images[0] // 使用生成的第一张图片
       };
       
       setCurrentBox(newBox);
@@ -67,7 +66,7 @@ const FinalGeneration = () => {
     } catch (error) {
       toast({
         title: "生成失败",
-        description: "请稍后重试",
+        description: error instanceof Error ? error.message : "请稍后重试",
         variant: "destructive",
       });
     } finally {
@@ -81,16 +80,12 @@ const FinalGeneration = () => {
     setIsOpening(true);
     
     try {
-      // TODO: 如果需要的话，这里可以调用额外的API来获取高清图片
-      // const imageUrl = await getHighResImage(currentBox.id);
-      
-      // 模拟生成图片
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // 盲盒已经包含生成的图片，直接开启
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 模拟开启动画
       
       const openedBox = {
         ...currentBox,
-        isOpened: true,
-        imageUrl: "https://images.unsplash.com/photo-1470813740244-df37b8c1edcb" // 占位图片
+        isOpened: true
       };
       
       setCurrentBox(openedBox);
@@ -141,11 +136,11 @@ const FinalGeneration = () => {
       <div className="max-w-4xl mx-auto">
         {/* 顶部导航 */}
         <div className="flex items-center justify-between mb-8">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/blind-box-report", { state: { inputName, blindBoxes: originalBlindBoxes } })}
-            className="border-blindbox-primary text-blindbox-primary"
-          >
+            <Button
+              variant="outline"
+              onClick={() => navigate("/blind-box-report", { state: { inputName, openedBoxes: originalBlindBoxes } })}
+              className="border-blindbox-primary text-blindbox-primary"
+            >
             <ArrowLeft className="w-4 h-4 mr-2" />
             返回报告页
           </Button>

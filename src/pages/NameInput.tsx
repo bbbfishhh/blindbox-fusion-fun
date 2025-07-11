@@ -25,22 +25,17 @@ const NameInput = () => {
 
     setIsLoading(true);
     try {
-      // TODO: 调用后端API生成意象组合
-      // const symbols = await generateSymbols(name);
+      // 调用后端API生成盲盒数据
+      const blindBoxData = await generateNameImages(name);
       
-      // 暂时使用模拟数据
-      setTimeout(() => {
-        navigate("/blind-box-reveal", { 
-          state: { 
-            inputName: name,
-            // symbols: symbols // 后续从API获取
-          }
-        });
-      }, 1000);
+      // 跳转到盲盒揭晓页面，传递姓名和盲盒数据
+      navigate("/blind-box-reveal", { 
+        state: { inputName: name, blindBoxData }
+      });
     } catch (error) {
       toast({
         title: "生成失败",
-        description: "请稍后重试",
+        description: error instanceof Error ? error.message : "生成盲盒时出现错误，请重试",
         variant: "destructive",
       });
     } finally {

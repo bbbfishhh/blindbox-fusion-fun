@@ -1,36 +1,87 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Star, Sparkles, ArrowRight, Crown, Heart, Zap } from "lucide-react";
+import { Star, Sparkles, ArrowRight, Crown, Heart, Zap, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { generateFeedback, BlindBoxData } from "@/services/api";
 
-interface BlindBox {
-  id: number;
-  symbol1: string;
-  symbol2: string;
-  imageUrl?: string;
-  explanation?: string;
-}
+// 使用API中定义的类型
 
 const BlindBoxReport = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { inputName, blindBoxes } = location.state || {};
+  const { inputName, openedBoxes } = location.state || {};
   
-  const [selectedSymbols, setSelectedSymbols] = useState<string[]>([]);
+  const [reports, setReports] = useState<Array<{
+    boxId: number;
+    report: string;
+    isLoading: boolean;
+  }>>([]);
+  const [selectedSymbols, setSelectedSymbols] = useState<{
+    symbol1: string;
+    symbol2: string;
+  }>({ symbol1: "", symbol2: "" });
+  const [allSymbols, setAllSymbols] = useState<string[]>([]);
 
-  // 固定意象库
-  const predefinedSymbols = {
-    "山海经神兽": ["青龙", "白虎", "朱雀", "玄武", "凤凰", "麒麟", "貔貅", "九尾狐"],
-    "现代动漫": ["机甲", "魔法少女", "时空穿越", "异世界", "超能力", "校园", "治愈系", "热血"],
-    "自然元素": ["火焰", "冰雪", "雷电", "森林", "海洋", "山峰", "星空", "彩虹"],
-    "情感色彩": ["温暖", "梦幻", "神秘", "活力", "宁静", "浪漫", "勇敢", "智慧"]
-  };
+  // 初始化数据和生成报告
+  useEffect(() => {
+    if (!inputName || !openedBoxes) {
+      navigate("/name-input");
+      return;
+    }
 
-  // 从姓名解析的意象
-  const nameSymbols = blindBoxes ? blindBoxes.flatMap((box: BlindBox) => [box.symbol1, box.symbol2]) : [];
+    // 为每个盲盒生成报告
+    const generateReports = async () => {
+      const initialReports = openedBoxes.map((box: BlindBoxData) => ({
+        boxId: box.id,
+        report: "",
+        isLoading: true
+      }));
+      setReports(initialReports);
+
+      // 调用API生成报告
+      for (const box of openedBoxes) {
+        try {
+          const feedbackResult = await generateFeedback(box.imagery1, box.imagery2);
+          
+          setReports(prev => prev.map(report => 
+            report.boxId === box.id 
+              ? { ...report, report: feedbackResult.feedback, isLoading: false }
+              : report
+          ));
+        } catch (error) {
+          console.error(`Failed to generate report for box ${box.id}:`, error);
+          setReports(prev => prev.map(report => 
+            report.boxId === box.id 
+              ? { ...report, report: "生成报告失败，请重试", isLoading: false }
+              : report
+          ));
+        }
+      }
+    };
+
+    generateReports();
+
+    // 收集所有意象选项（合并固定意象库和姓名解析意象）
+    const collectAllSymbols = () => {
+      const symbolSet = new Set<string>();
+      
+      // 从已打开的盲盒中提取意象
+      openedBoxes.forEach((box: BlindBoxData) => {
+        symbolSet.add(box.imagery1);
+        symbolSet.add(box.imagery2);
+      });
+      
+      // 添加固定的意象库
+      const fixedSymbols = ["山", "水", "树", "风", "星", "海", "剑", "盾", "花", "蝶", "云", "雷", "火", "冰", "光", "影"];
+      fixedSymbols.forEach(symbol => symbolSet.add(symbol));
+      
+      setAllSymbols(Array.from(symbolSet));
+    };
+
+    collectAllSymbols();
+  }, [inputName, openedBoxes, navigate]);
 
   const getRarityLevel = (id: number) => {
     const rarities = ["稀有", "珍贵", "传说"];
@@ -50,30 +101,34 @@ const BlindBoxReport = () => {
 
   const handleSymbolToggle = (symbol: string) => {
     setSelectedSymbols(prev => {
-      if (prev.includes(symbol)) {
-        return prev.filter(s => s !== symbol);
-      } else if (prev.length < 2) {
-        return [...prev, symbol];
+      if (prev.symbol1 === symbol) {
+        return { ...prev, symbol1: "" };
+      } else if (prev.symbol2 === symbol) {
+        return { ...prev, symbol2: "" };
+      } else if (!prev.symbol1) {
+        return { ...prev, symbol1: symbol };
+      } else if (!prev.symbol2) {
+        return { ...prev, symbol2: symbol };
       } else {
         // 替换第一个选中的
-        return [prev[1], symbol];
+        return { symbol1: symbol, symbol2: prev.symbol2 };
       }
     });
   };
 
   const handleGenerateNewBox = () => {
-    if (selectedSymbols.length !== 2) return;
+    if (!selectedSymbols.symbol1 || !selectedSymbols.symbol2) return;
     
     navigate("/final-generation", {
       state: {
         inputName,
-        selectedSymbols,
-        originalBlindBoxes: blindBoxes
+        selectedSymbols: [selectedSymbols.symbol1, selectedSymbols.symbol2],
+        originalBlindBoxes: openedBoxes
       }
     });
   };
 
-  if (!blindBoxes) {
+  if (!openedBoxes) {
     navigate("/name-input");
     return null;
   }
@@ -92,7 +147,8 @@ const BlindBoxReport = () => {
 
         {/* 盲盒报告展示 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {blindBoxes.map((box: BlindBox) => {
+          {openedBoxes.map((box: BlindBoxData) => {
+            const report = reports.find(r => r.boxId === box.id);
             const RarityIcon = getRarityIcon(box.id);
             const rarityColor = getRarityColor(box.id);
             const rarity = getRarityLevel(box.id);
@@ -107,33 +163,30 @@ const BlindBoxReport = () => {
                     </Badge>
                   </div>
                   <CardTitle className="text-lg text-blindbox-primary">
-                    {box.symbol1} + {box.symbol2}
+                    {box.imagery1} + {box.imagery2}
                   </CardTitle>
                 </CardHeader>
                 
                 <CardContent className="space-y-4">
                   <div className="w-full h-32 rounded-lg overflow-hidden">
                     <img 
-                      src={box.imageUrl} 
-                      alt={`${box.symbol1} + ${box.symbol2}`}
+                      src={box.image_url} 
+                      alt={`${box.imagery1} + ${box.imagery2}`}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <p className="text-sm text-gray-600">{box.explanation}</p>
-                    
-                    <div className="bg-blindbox-light/30 p-3 rounded-lg">
-                      <h4 className="font-semibold text-blindbox-primary mb-2">情感价值分析</h4>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Heart className="w-4 h-4 text-red-400" />
-                        <span className="text-gray-600">
-                          {box.id === 1 && "充满希望与包容的温暖组合"}
-                          {box.id === 2 && "浪漫与美好的梦幻联结"}
-                          {box.id === 3 && "坚定意志与光明未来的象征"}
-                        </span>
+                    {report?.isLoading ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        <span className="text-sm text-gray-600">正在生成深度解析...</span>
                       </div>
-                    </div>
+                    ) : (
+                      <p className="text-sm text-gray-600">
+                        {report?.report || `${box.imagery1}与${box.imagery2}的神秘组合，蕴含着独特的寓意。`}
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -154,77 +207,55 @@ const BlindBoxReport = () => {
           </CardHeader>
           
           <CardContent className="space-y-6">
-            {/* 合并所有意象选择 */}
-            {Object.entries(predefinedSymbols).map(([category, symbols]) => (
-              <div key={category}>
-                <h3 className="text-lg font-semibold text-blindbox-primary mb-3">
-                  {category}
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {symbols.map((symbol) => (
-                    <Button
-                      key={symbol}
-                      variant={selectedSymbols.includes(symbol) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleSymbolToggle(symbol)}
-                      className={selectedSymbols.includes(symbol) 
-                        ? "bg-blindbox-accent hover:bg-blindbox-accent/80" 
-                        : "border-blindbox-light hover:border-blindbox-accent"
-                      }
-                    >
-                      {symbol}
-                    </Button>
-                  ))}
-                </div>
+            {/* 统一意象选择区域 */}
+            <div>
+              <h3 className="text-lg font-semibold text-blindbox-primary mb-3">
+                选择意象进行组合 (从所有可用意象中选择两个)
+              </h3>
+              <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                {allSymbols.map((symbol) => (
+                  <Button
+                    key={symbol}
+                    variant={selectedSymbols.symbol1 === symbol || selectedSymbols.symbol2 === symbol ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleSymbolToggle(symbol)}
+                    className={selectedSymbols.symbol1 === symbol || selectedSymbols.symbol2 === symbol
+                      ? "bg-blindbox-accent hover:bg-blindbox-accent/80" 
+                      : "border-blindbox-light hover:border-blindbox-accent"
+                    }
+                  >
+                    {symbol}
+                  </Button>
+                ))}
               </div>
-            ))}
-            
-            {/* 姓名解析意象 */}
-            {nameSymbols.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-blindbox-primary mb-3">
-                  来自 "{inputName}" 的原始意象
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {nameSymbols.map((symbol: string, index: number) => (
-                    <Button
-                      key={`${symbol}-${index}`}
-                      variant={selectedSymbols.includes(symbol) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleSymbolToggle(symbol)}
-                      className={selectedSymbols.includes(symbol) 
-                        ? "bg-blindbox-accent hover:bg-blindbox-accent/80" 
-                        : "border-blindbox-light hover:border-blindbox-accent"
-                      }
-                    >
-                      {symbol}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
+            </div>
 
             {/* 选择状态显示 */}
             <div className="mt-8 p-4 bg-blindbox-light/20 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-blindbox-primary">
-                    已选择: {selectedSymbols.length}/2
+                    已选择: {[selectedSymbols.symbol1, selectedSymbols.symbol2].filter(Boolean).length}/2
                   </span>
-                  {selectedSymbols.length > 0 && (
+                  {(selectedSymbols.symbol1 || selectedSymbols.symbol2) && (
                     <div className="flex gap-2">
-                      {selectedSymbols.map((symbol, index) => (
-                        <Badge key={index} className="bg-blindbox-accent text-white">
-                          {symbol}
+                      {selectedSymbols.symbol1 && (
+                        <Badge className="bg-blindbox-accent text-white">
+                          {selectedSymbols.symbol1}
                         </Badge>
-                      ))}
+                      )}
+                      {selectedSymbols.symbol2 && (
+                        <Badge className="bg-blindbox-accent text-white">
+                          {selectedSymbols.symbol2}
+                        </Badge>
+                      )}
                     </div>
                   )}
                 </div>
                 
                 <Button
                   onClick={handleGenerateNewBox}
-                  disabled={selectedSymbols.length !== 2}
+                  disabled={!selectedSymbols.symbol1 || !selectedSymbols.symbol2}
                   className="bg-gradient-to-r from-blindbox-primary to-blindbox-secondary hover:from-blindbox-secondary hover:to-blindbox-primary disabled:opacity-50"
                 >
                   生成新盲盒
