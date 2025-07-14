@@ -36,6 +36,17 @@ export interface ImageResponse {
   images: string[];
 }
 
+// Legacy support types for Generator.tsx
+export interface SymbolOption {
+  id: number;
+  symbol1: string;
+  symbol2: string;
+}
+
+export interface SymbolResponse {
+  symbol_dict: SymbolOption[];
+}
+
 // 检查API连接
 export const checkApiConnection = async (): Promise<boolean> => {
   try {
@@ -137,4 +148,16 @@ export const generateImageFromImageries = async (imagery1: string, imagery2: str
     }
     throw error;
   }
+};
+
+// Legacy support function for Generator.tsx
+export const generateSymbols = async (name: string): Promise<SymbolResponse> => {
+  const nameImages = await generateNameImages(name);
+  const symbolDict: SymbolOption[] = nameImages.map((item, index) => ({
+    id: index + 1,
+    symbol1: item.imagery1,
+    symbol2: item.imagery2,
+  }));
+  
+  return { symbol_dict: symbolDict };
 };

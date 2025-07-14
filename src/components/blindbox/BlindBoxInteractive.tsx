@@ -1,94 +1,29 @@
-import React, { useState, useRef } from "react";
+import React from "react";
 import { Gift, PackageOpen, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { createParticles } from "@/lib/combinationUtils";
-import ResultDisplay from "./blindbox/ResultDisplay";
-import { BlindBoxData } from "@/services/api";
-import { Combination } from "@/data/elements";
+import { useBlindBoxLogic } from "@/hooks/useBlindBoxLogic";
+import ResultDisplay from "./ResultDisplay";
 
-interface BlindBoxProps {
-  symbol1: string;
-  symbol2: string;
-  onReset?: () => void;
-}
-
-const BlindBox: React.FC<BlindBoxProps> = ({ symbol1, symbol2, onReset }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isShaking, setIsShaking] = useState(false);
-  const [combination, setCombination] = useState<Combination | null>(null);
-  const [showResult, setShowResult] = useState(false);
-  const boxRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
-
-  const handleShake = () => {
-    if (isShaking || isOpen) return;
-
-    setIsShaking(true);
-    setTimeout(() => {
-      setIsShaking(false);
-    }, 500);
-
-    // Create combination from symbols
-    const newCombination: Combination = {
-      id: `${symbol1}-${symbol2}`,
-      name: `${symbol1}${symbol2}组合`,
-      description: `${symbol1}和${symbol2}的创意组合`,
-      element1: {
-        id: symbol1,
-        name: symbol1,
-        description: symbol1,
-        emoji: "✨"
-      },
-      element2: {
-        id: symbol2,
-        name: symbol2,
-        description: symbol2,
-        emoji: "🎭"
-      },
-      emoji: "✨🎭"
-    };
-
-    setCombination(newCombination);
-
-    toast({
-      title: "摇一摇！",
-      description: "里面好像有什么东西...",
-      duration: 2000,
-    });
-  };
-
-  const handleOpen = () => {
-    if (isOpen || !combination) return;
-
-    setIsOpen(true);
-
-    if (boxRef.current) {
-      createParticles(boxRef.current, 30);
-    }
-
-    setTimeout(() => {
-      setShowResult(true);
-    }, 500);
-  };
-
-  const handleReset = () => {
-    setIsOpen(false);
-    setShowResult(false);
-    setCombination(null);
-    if (onReset) {
-      onReset();
-    }
-  };
+const BlindBoxInteractive: React.FC = () => {
+  const {
+    isOpen,
+    isShaking,
+    combination,
+    showResult,
+    boxRef,
+    handleShake,
+    handleOpen,
+    handleReset,
+  } = useBlindBoxLogic();
 
   return (
     <div className="relative flex flex-col items-center justify-center w-full">
       {!showResult ? (
         <div
           ref={boxRef}
-          className={`blind-box relative w-64 h-64 md:w-80 md:h-80 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-sm border-2 border-primary flex items-center justify-center cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 ${
+          className={`blind-box relative w-64 h-64 md:w-80 md:h-80 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-sm border-2 border-primary flex items-center justify-center cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl ${
             isShaking ? "animate-box-shake" : ""
-          } ${isOpen ? "animate-box-open" : ""}`}
+          } ${isOpen ? "animate-box-open" : ""} hover:scale-105`}
           onClick={!isOpen ? handleShake : undefined}
         >
           {/* Animated background glow */}
@@ -147,4 +82,4 @@ const BlindBox: React.FC<BlindBoxProps> = ({ symbol1, symbol2, onReset }) => {
   );
 };
 
-export default BlindBox;
+export default BlindBoxInteractive;
