@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { checkApiConnection } from "@/services/api";
 
 const Index = () => {
+  console.log('Generator component loaded - no generateSymbols import');
   const { toast } = useToast();
   const [name, setName] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
