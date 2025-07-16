@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
-import { generateSymbols, checkApiConnection, type SymbolOption } from "@/services/api";
+import { checkApiConnection } from "@/services/api";
 
 const Index = () => {
   const { toast } = useToast();
   const [name, setName] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
-  const [symbolOptions, setSymbolOptions] = useState<SymbolOption[]>([]);
+  const [symbolOptions, setSymbolOptions] = useState<any[]>([]);
   const [selectedSymbolId, setSelectedSymbolId] = useState<string>("");
   const [showBlindBox, setShowBlindBox] = useState<boolean>(false);
   const [apiConnected, setApiConnected] = useState<boolean | null>(null);
@@ -43,7 +43,13 @@ const Index = () => {
     setIsAnalyzing(true);
     
     try {
-      const response = await generateSymbols(name);
+      // Mock response for now
+      const response = {
+        symbol_dict: [
+          { id: 1, symbol1: "阳光", symbol2: "微风" },
+          { id: 2, symbol1: "星辰", symbol2: "大海" }
+        ]
+      };
       setSymbolOptions(response.symbol_dict);
       
       // Auto-select first option

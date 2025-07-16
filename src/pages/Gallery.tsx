@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { type CarouselApi } from "@/components/ui/carousel";
 import { Sparkles, Star, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,10 +48,23 @@ const galleryExamples = [
 
 const Gallery = () => {
   const navigate = useNavigate();
+  const [api, setApi] = React.useState<CarouselApi>();
+  const [isPaused, setIsPaused] = React.useState(false);
 
   const handleStartGeneration = () => {
     navigate("/name-input");
   };
+
+  // 自动轮播功能
+  useEffect(() => {
+    if (!api || isPaused) return;
+
+    const autoplay = setInterval(() => {
+      api.scrollNext();
+    }, 3000); // 每3秒自动切换
+
+    return () => clearInterval(autoplay);
+  }, [api, isPaused]);
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center py-8 px-4">
@@ -75,17 +89,27 @@ const Gallery = () => {
 
       {/* 中部图库 - 横向滚动展示 */}
       <div className="w-full max-w-6xl mb-16">
-        <h2 className="text-2xl font-semibold text-blindbox-primary text-center mb-8">
-          ✨ 精彩样例预览 ✨
-        </h2>
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-semibold text-blindbox-primary mb-2">
+            ✨ 精彩样例预览 ✨
+          </h2>
+          <p className="text-sm text-gray-500">
+            {isPaused ? "⏸️ 轮播已暂停，移开鼠标恢复" : "🔄 自动轮播中，悬停暂停"}
+          </p>
+        </div>
         
-        <Carousel
-          opts={{
-            align: "start",
-            loop: true,
-          }}
-          className="w-full"
+        <div 
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
         >
+          <Carousel
+            setApi={setApi}
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
+          >
           <CarouselContent className="-ml-2 md:-ml-4">
             {galleryExamples.map((example) => (
               <CarouselItem key={example.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
@@ -117,6 +141,7 @@ const Gallery = () => {
           <CarouselPrevious className="left-2 bg-white/80 hover:bg-white border-blindbox-light hover:border-blindbox-accent" />
           <CarouselNext className="right-2 bg-white/80 hover:bg-white border-blindbox-light hover:border-blindbox-accent" />
         </Carousel>
+        </div>
       </div>
 
       {/* 底部CTA按钮 */}
