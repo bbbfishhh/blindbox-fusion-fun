@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Gift, PackageOpen, Sparkles, Eye, ArrowRight } from "lucide-react";
+import { Gift, PackageOpen, Sparkles, Eye, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -65,16 +65,30 @@ const BlindBoxReveal = () => {
   return (
     <div className="min-h-screen w-full py-8 px-4 bg-gradient-to-br from-blindbox-light to-blindbox-pink/20">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-blindbox-primary mb-4">
-            🎁 您的专属姓名盲盒已准备就绪
-          </h1>
-          <p className="text-lg text-gray-600">
-            基于 "<span className="font-semibold text-blindbox-primary">{inputName}</span>" 生成的三个神秘盲盒
-          </p>
-          <Badge variant="outline" className="mt-2 border-blindbox-accent text-blindbox-accent">
-            点击盲盒查看惊喜内容
-          </Badge>
+        {/* 顶部导航 */}
+        <div className="flex items-center justify-between mb-8">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/name-input")}
+            className="border-blindbox-primary text-blindbox-primary"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            返回姓名输入
+          </Button>
+          
+          <div className="text-center">
+            <h1 className="text-2xl md:text-3xl font-bold text-blindbox-primary">
+              🎁 您的专属姓名盲盒已准备就绪
+            </h1>
+            <p className="text-lg text-gray-600">
+              基于 "<span className="font-semibold text-blindbox-primary">{inputName}</span>" 生成的三个神秘盲盒
+            </p>
+            <Badge variant="outline" className="mt-2 border-blindbox-accent text-blindbox-accent">
+              点击盲盒查看惊喜内容
+            </Badge>
+          </div>
+          
+          <div className="w-20" /> {/* 占位元素保持平衡 */}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

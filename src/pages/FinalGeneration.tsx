@@ -138,11 +138,11 @@ const FinalGeneration = () => {
         <div className="flex items-center justify-between mb-8">
             <Button
               variant="outline"
-              onClick={() => navigate("/blind-box-report", { state: { inputName, openedBoxes: originalBlindBoxes } })}
+              onClick={() => navigate("/name-input")}
               className="border-blindbox-primary text-blindbox-primary"
             >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            返回报告页
+            返回姓名输入
           </Button>
           
           <div className="text-center">
